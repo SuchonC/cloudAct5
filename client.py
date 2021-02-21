@@ -9,6 +9,7 @@ PATH = "D:\\CompEng\\Year 3\\Year 3 Term 2\\Cloud\\Activity 5\\codes\\files\\"
 USER = "suchon1"
 
 # takes splitted input into a dict
+# ex. from ['put', 'myfile.txt'] into {'arg0: 'put', 'arg1': 'myfile.txt'}
 def decodeInput(input: list) -> dict:
     if type(input) != list :
         print("Input to validate must be a list")
@@ -28,7 +29,7 @@ def decodeInput(input: list) -> dict:
         return {
             "arg0" : "view"
         }
-    elif input[0] == 'get' :
+    elif input[0] == 'get' : # if command is get
         if len(input) == 2 : # get filename of current user
             return {
                 "arg0" : "get",
@@ -48,8 +49,13 @@ def decodeInput(input: list) -> dict:
         else :
             print("Usage : get <filename> [Username]")
             return {}
+    else : print("List of commands : put, view and get")
 
 # handle put command
+# takes in {'arg0': 'put', 'arg1': <filename>}
+# then send post request to lambda with file (in byte) as a request body
+# and {'command': 'put', 'filename': <filename>, 'user': <user>} as a request parameter
+# expected {'success': True | False} as a response
 def handle_put(command_dict: dict) :
     filename = command_dict['arg1']
     try :
@@ -61,10 +67,15 @@ def handle_put(command_dict: dict) :
             }).json()
             if response['success'] : print("OK")
             else : print("FAILED")
-    except FileNotFoundError:
+    except FileNotFoundError: # if file is not found
         print(f"File {filename} not found")
 
 # handle view command
+# takes in nothing
+# then send get request to lambda with empty request body
+# and {'command': 'view', 'user': <user>} as a request parameter
+# expected {'success': True | False, 'data': <list of files in string>} as a response
+# an ex. of list of files in string is "file1.txt 15 2021/02/20 16:12:41\n file2.txt 15 2021/02/21 16:00:00"
 def handle_view():
     try :
         response = requests.get(URL, params={
