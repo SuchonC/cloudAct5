@@ -91,7 +91,7 @@ def handle_view():
 # takes in {'arg0': 'get', 'filename': <filename>. 'user': <user>}
 # then send a get requet to lambda with an empty request body
 # and {'commnand': 'get', 'filename': <filename>, 'user': <user>} as a request parameter
-# expected {'success': True | False, 'data': <file>, 'isBase64Encoded': True | False} as a response
+# expected {'success': True | False, 'data': <file | failed message>, 'isBase64Encoded': True | False} as a response
 def handle_get(command_dict: dict):
     filename = command_dict['arg1']
     user = command_dict['arg2']
@@ -104,6 +104,7 @@ def handle_get(command_dict: dict):
         if response['success'] :
             print("OK")
             with open(PATH + filename, 'wb') as file:
+                # check encoding flag
                 if response['isBase64Encoded'] :
                     file.write(base64.b64decode(response['data']))
                 else : file.write(response['data'])
@@ -112,10 +113,11 @@ def handle_get(command_dict: dict):
     except:
         print("FAILED")
 
+# main loop
 while True:
-    user_input = input(">> ").split()
-    command = decodeInput(user_input)
-    if command : # if command is valid then execute command
-        if command['arg0'] == 'put' : handle_put(command)
+    user_input = input(">> ").split() # split the input
+    command = decodeInput(user_input) # decode splitted input into a dict
+    if command : # if input is successfully decoded then execute command by comparing 'arg0'
+        if command['arg0'] == 'put' : handle_put(command) 
         elif command['arg0'] == 'view' : handle_view()
         elif command['arg0'] == 'get' : handle_get(command)
