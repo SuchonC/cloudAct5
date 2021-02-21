@@ -37,13 +37,17 @@ def isOwnerOfFile(user: str, encoded_filename: str) -> bool :
         return owner == user
     except:
         return False
-    
+
+# Handles uploading file
+# takes in "file" (in byte) and "params" as arguments
+# expected params structure is {'filename': <filename>, 'user': <file owner>}
+# upload "file" to s3 with encoded name as a Key (using previously described function)
+# with 'owner' as metadata
 def uploadfile(file, params: dict) :
     encoded_filename = encodeFileName(params['filename'], params['user'])
     try :
         s3.put_object(Body=file, Key=encoded_filename, Bucket=BUCKET_NAME, Metadata={
-            "owner": params['user'],
-            "filename": params['filename']
+            "owner": params['user']
         })
         return json.dumps({
             "success" : True
@@ -54,16 +58,17 @@ def uploadfile(file, params: dict) :
         })
         
 def viewFiles(user: str) :
-    owner = user
     files_str = ''
-    objects =  s3.list_objects(Bucket=BUCKET_NAME)['Contents']
-    for i in range (len(objects)):
-        encoded_filename = objects[i]['Key']
-        if isOwnerOfFile(user, encoded_filename) :
-            decoded_filename = decodeFileName(encoded_filename, user)
-            file_size = str(objects[i]['Size'])
-            last_modified = objects[i]['LastModified'].strftime("%Y/%m/%d %H:%M:%S")
-            files_str += f"{decoded_filename} {file_size} {last_modified}\n"
+    dict_result =  s3.list_objects(Bucket=BUCKET_NAME)
+    if 'Contens' in dict_result:
+        objects = dict_result['Contens']
+        for i in range (len(objects)):
+            encoded_filename = objects[i]['Key']
+            if isOwnerOfFile(user, encoded_filename) :
+                decoded_filename = decodeFileName(encoded_filename, user)
+                file_size = str(objects[i]['Size'])
+                last_modified = objects[i]['LastModified'].strftime("%Y/%m/%d %H:%M:%S")
+                files_str += f"{decoded_filename} {file_size} {last_modified}\n"
     return json.dumps({
         "success" : True,
         "data" : files_str[:-1]
