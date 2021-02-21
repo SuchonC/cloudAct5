@@ -71,8 +71,8 @@ def uploadfile(file, params: dict) :
 def viewFiles(user: str) :
     files_str = ''
     dict_result =  s3.list_objects(Bucket=BUCKET_NAME)
-    if 'Contens' in dict_result:
-        objects = dict_result['Contens']
+    if 'Contents' in dict_result:
+        objects = dict_result['Contents']
         for i in range (len(objects)):
             encoded_filename = objects[i]['Key']
             if isOwnerOfFile(user, encoded_filename) :
