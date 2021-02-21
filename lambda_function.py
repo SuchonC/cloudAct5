@@ -6,21 +6,31 @@ s3 = boto3.client('s3')
 BUCKET_NAME = "cloudact5"
 
 # Helper function
+# decode event['body'] if encoding flag is set
 def getDecodedBody(event: dict) : 
     if(event['isBase64Encoded']) : return base64.b64decode(event['body'])
     else : return event['body']
 
 # Helper function
 # prepend '[owner] - ' to filename 
+# ex. filename is "myfile.txt" and owner is "suchon"
+# then it outputs "[suchon] - myfile.txt"
+# this handles the scenario when different users have the same filename
 def encodeFileName(filename: str, owner: str) :
     return f"[{owner}] - {filename}"
     
 # Helper function
+# the opposite of encoding filename
+# ex. filename is "[suchon] - myfile.txt" and owner is "suchon"
+# then it outputs "myfile.txt"
 def decodeFileName(filename: str, owner: str) :
     cut_length = len(owner) + 5
     return filename[cut_length:]
     
 # Helper function
+# checking file ownership
+# by taking encoded filename and a user to check ownership with as arguments
+# get metadata of "encoded_filename" and compare "owner" with the user argument
 def isOwnerOfFile(user: str, encoded_filename: str) -> bool :
     try: 
         owner = s3.head_object(Bucket=BUCKET_NAME, Key=encoded_filename)['Metadata']['owner']
