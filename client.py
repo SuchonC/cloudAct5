@@ -72,7 +72,7 @@ def handle_put(command_dict: dict) :
 
 # handle view command
 # takes in nothing
-# then send get request to lambda with empty request body
+# then send get request to lambda with an empty request body
 # and {'command': 'view', 'user': <user>} as a request parameter
 # expected {'success': True | False, 'data': <list of files in string>} as a response
 # an ex. of list of files in string is "file1.txt 15 2021/02/20 16:12:41\n file2.txt 15 2021/02/21 16:00:00"
@@ -87,6 +87,11 @@ def handle_view():
     except :
         print("FAILED")
 
+# handle get command
+# takes in {'arg0': 'get', 'filename': <filename>. 'user': <user>}
+# then send a get requet to lambda with an empty request body
+# and {'commnand': 'get', 'filename': <filename>, 'user': <user>} as a request parameter
+# expected {'success': True | False, 'data': <file>, 'isBase64Encoded': True | False} as a response
 def handle_get(command_dict: dict):
     filename = command_dict['arg1']
     user = command_dict['arg2']
@@ -99,7 +104,9 @@ def handle_get(command_dict: dict):
         if response['success'] :
             print("OK")
             with open(PATH + filename, 'wb') as file:
-                file.write(base64.b64decode(response['data']))
+                if response['isBase64Encoded'] :
+                    file.write(base64.b64decode(response['data']))
+                else : file.write(response['data'])
         else :
             print(f"FAILED, {response['data']}")
     except:
