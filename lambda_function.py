@@ -6,6 +6,14 @@ s3 = boto3.client('s3')
 BUCKET_NAME = "cloudact5"
 
 # Helper function
+# outputs a dict which would then be returned to the client
+def getReturnDict(code: int, body) :
+    return {
+        "statusCode" : code,
+        "body" : body
+    }
+
+# Helper function
 # decode event['body'] if encoding flag is set
 def getDecodedBody(event: dict) : 
     if(event['isBase64Encoded']) : return base64.b64decode(event['body'])
@@ -56,7 +64,10 @@ def uploadfile(file, params: dict) :
         return json.dumps({
             "success" : False
         })
-        
+
+# Handles viewing files
+# outputs files owned by "user" in string
+# output ex. "file1.txt 15 2021/02/20 16:21:12\ntest2.txt 15 2021/02/20 16:00:23"
 def viewFiles(user: str) :
     files_str = ''
     dict_result =  s3.list_objects(Bucket=BUCKET_NAME)
@@ -74,6 +85,11 @@ def viewFiles(user: str) :
         "data" : files_str[:-1]
     })
 
+# Handles downloading file
+# takes in "filename" and "user" as arguments
+# then check if "user" owns that "filename"
+# if yes, then return base 64 encoded file with encoding flag set
+# if no, return error message in "data"
 def downloadFile(filename: str, user: str) :
     encoded_filename = encodeFileName(filename, user)
     if isOwnerOfFile(user, encoded_filename) :
@@ -88,27 +104,12 @@ def downloadFile(filename: str, user: str) :
         "data" : f"{filename} does not belong to {user}",
         "isBase64Encoded" : False
     })
-    
-def getReturnDict(code: int, body) :
-    return {
-        "statusCode" : code,
-        "body" : body
-    }
 
 def lambda_handler(event, context):
-    # test case
-    # decoded_body = event
-    # params = {
-    #     "command": "view",
-    #     "user": "suchon1"
-    # }
-    # ------------
-
-    params = event['queryStringParameters']
-    
-    if params['command']:
+    # main
+    params = event['queryStringParameters'] # get parameter dict
+    if params['command']: # execute commands by comparing "command"
         if params['command'] == 'put' : 
-            # returnStatus = uploadfile(event, params)
             returnStatus = uploadfile(getDecodedBody(event), params)
             return getReturnDict(200, returnStatus)
         elif params['command'] == 'view' :
