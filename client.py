@@ -75,7 +75,7 @@ def handle_put(command_dict: dict) :
 # then send get request to lambda with an empty request body
 # and {'command': 'view', 'user': <user>} as a request parameter
 # expected {'success': True | False, 'data': <list of files in string>} as a response
-# an ex. of list of files in string is "file1.txt 15 2021/02/20 16:12:41\n file2.txt 15 2021/02/21 16:00:00"
+# an ex. of list of files in string is "file1.txt 15 2021/02/20 16:12:41\nfile2.txt 15 2021/02/21 16:00:00"
 def handle_view():
     try :
         response = requests.get(URL, params={
