@@ -107,16 +107,16 @@ def handle_get(command_dict: dict):
             "user": user
         }).json()
         if response['success'] :
-            print("OK")
             with open(PATH.joinpath(filename), 'wb') as file:
                 # check encoding flag
                 if response['isBase64Encoded'] :
                     file.write(base64.b64decode(response['data']))
                 else : file.write(response['data'])
+                print("OK")
         else :
             print(f"FAILED, {response['data']}")
-    except:
-        print("FAILED")
+    except FileNotFoundError:
+        print(f"FAILED, {PATH} not found")
 
 # main loop
 while True:
