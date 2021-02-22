@@ -5,6 +5,10 @@ import json
 import os
 import pathlib
 
+if not 'LAMBDA_URL_CLOUD_ACT_5' in os.environ :
+    print("Please set an environment variable named 'LAMBDA_URL_CLOUD_ACT_5' with the my URL. You can find it in my PDF")
+    exit()
+
 URL = os.environ['LAMBDA_URL_CLOUD_ACT_5']
 PATH = pathlib.Path().absolute().joinpath('files') # files to be used are located in 'files' subfolder
 USER = "suchon1"
