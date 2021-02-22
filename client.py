@@ -2,10 +2,11 @@ from types import resolve_bases
 import requests
 import base64
 import json
+import os
+import pathlib
 
-URL = "https://uuirpivhhc.execute-api.ap-southeast-1.amazonaws.com/default/cloudact5"
-PATH = "D:\\CompEng\\Year 3\\Year 3 Term 2\\Cloud\\Activity 5\\codes\\files\\"
-
+URL = os.environ['LAMBDA_URL_CLOUD_ACT_5']
+PATH = pathlib.Path().absolute().joinpath('files') # files to be used are located in 'files' subfolder
 USER = "suchon1"
 
 # takes splitted input into a dict
@@ -59,7 +60,7 @@ def decodeInput(input: list) -> dict:
 def handle_put(command_dict: dict) :
     filename = command_dict['arg1']
     try :
-        with open(PATH + filename, 'rb') as file:
+        with open(PATH.joinpath(filename), 'rb') as file:
             response = requests.post(URL, data=file, params={
                 "command": "put",
                 "filename": filename,
@@ -103,7 +104,7 @@ def handle_get(command_dict: dict):
         }).json()
         if response['success'] :
             print("OK")
-            with open(PATH + filename, 'wb') as file:
+            with open(PATH.joinpath(filename), 'wb') as file:
                 # check encoding flag
                 if response['isBase64Encoded'] :
                     file.write(base64.b64decode(response['data']))
