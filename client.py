@@ -48,7 +48,7 @@ def decodeInput(input: list) -> dict:
         else :
             print("Usage : get <filename> [Username]")
             return {}
-    elif input[0] == 'newuser' :
+    elif input[0] == 'newuser' : # if command is newuser
         if len(input) == 4:
             return {
                 "arg0" : "newuser",
@@ -59,7 +59,7 @@ def decodeInput(input: list) -> dict:
         else :
             print("Usage : newuser <username> <password> <confirm password>")
             return {}
-    elif input[0] == 'login' :
+    elif input[0] == 'login' : # if command is login
         if len(input) == 3 :
             return {
                 "arg0" : "login",
@@ -69,7 +69,7 @@ def decodeInput(input: list) -> dict:
         else :
             print("Usage : login <username> <password>")
             return {}
-    elif input[0] == 'share' :
+    elif input[0] == 'share' : # if command is share
         if len(input) == 3 :
             return {
                 "arg0" : "share",
@@ -79,7 +79,7 @@ def decodeInput(input: list) -> dict:
         else :
             print("Usage : share <filename> <destination username>")
             return
-    elif input[0] == 'logout' :
+    elif input[0] == 'logout' : # if command is logout
         if len(input) == 1 :
             return {
                 "arg0" : "logout"
@@ -120,7 +120,6 @@ def handle_put(command_dict: dict) :
 # then send get request to lambda with an empty request body
 # and {'command': 'view', 'user': <user>} as a request parameter
 # expected {'success': True | False, 'data': <list of files in string>} as a response
-# an ex. of list of files in string is "file1.txt 15 2021/02/20 16:12:41\nfile2.txt 15 2021/02/21 16:00:00"
 def handle_view():
     if not isLoggedIn():
         print("Please login")
@@ -164,6 +163,9 @@ def handle_get(command_dict: dict):
     except FileNotFoundError:
         print(f"FAILED, {PATH} not found")
 
+# handle newuser command
+# send POST request with username and password to be created as request parameters
+# expected response {'success': True | False, 'data': <failed message>}
 def handle_newuser(command_dict: dict) :
     # validate password (confirm)
     if command_dict['arg2'] != command_dict['arg3'] :
@@ -177,6 +179,9 @@ def handle_newuser(command_dict: dict) :
         if response['success'] : print("OK")
         else : print(f"FAILED\n{response['data']}")
 
+# handle login command
+# send POST request with username and password to be logged in as request parameters
+# expected response {'success': True | False}
 def handle_login(command_dict: dict) :
     response = requests.post(URL, params={
         "command" : "login",
@@ -189,6 +194,16 @@ def handle_login(command_dict: dict) :
         USER = command_dict['arg1']
     else : print("FAILED")
 
+
+# handle share command
+# send POST request to share a file with the following structure
+# {
+#   'command': 'share',
+#   'share_from': <current_user>,
+#   'share_to': <destination_user>,
+#   'filename': <filename_to_be_shared>
+# }
+# expected response {'success': True | False, 'data': <failed message>}
 def handle_share(command_dict: dict) :
     if not isLoggedIn() :
         print("Please login")
@@ -203,6 +218,9 @@ def handle_share(command_dict: dict) :
     else :
         print(f"FAILED\n{response['data']}")
 
+# handle logout command
+# basically just set USER to ''
+# empty USER variable, that is
 def handle_logout(command_dict: dict) :
     if not isLoggedIn() :
         print("Please login")
