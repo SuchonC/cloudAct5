@@ -57,7 +57,7 @@ def isUsernameExists(username: str) -> bool :
         }
     )
     
-    return response['Count'] == 0
+    return response['Count'] > 0
 
 # Handles uploading file
 # takes in "file" (in byte) and "params" as arguments
@@ -119,7 +119,7 @@ def downloadFile(filename: str, user: str) :
     })
     
 def createUser(username: str, password: str) :
-    if isUsernameExists(username):
+    if not isUsernameExists(username):
         db.put_item(
             TableName="Users",
             Item={
@@ -148,6 +148,30 @@ def login(username: str, password: str) :
     return json.dumps({
         "success" : response['Count'] == 1
     })
+    
+def share(share_from_user: str, share_to_user: str, filename: str) :
+    # share_to_user must exists
+    if not isUsernameExists(share_to_user) :
+        return json.dumps({
+            "success" : False,
+            "data" : f"Username \"{share_to_user}\" does not exists"
+        })
+    # filename must be owned by share_from_user ?? or can one share files that one has been shared with
+    if not isOwnerOfFile(share_from_user, encodeFileName(filename, share_from_user)) :
+        return json.dumps({
+            "success" : False,
+            "data" : f"{filename} is not owned by you"
+        })
+    db.put_item(
+        TableName="Sharings",
+        Item={
+            "shared_to" : {"S" : share_to_user},
+            "filename" : {"S" : filename}
+        }
+    )
+    return json.dumps({
+        "success" : True
+    })
 
 def lambda_handler(event, context):    
     # main
@@ -168,3 +192,6 @@ def lambda_handler(event, context):
         elif params['command'] == 'login' :
             loginStatus = login(params['username'], params['password'])
             return getReturnDict(201, loginStatus)
+        elif params['command'] == 'share' :
+            shareStatus = share(params['share_from'], params['share_to'], params['filename'])
+            return getReturnDict(201, shareStatus)
