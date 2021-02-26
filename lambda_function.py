@@ -166,6 +166,7 @@ def share(share_from_user: str, share_to_user: str, filename: str) :
         TableName="Sharings",
         Item={
             "shared_to" : {"S" : share_to_user},
+            "shared_from" : {"S" : share_from_user},
             "filename" : {"S" : filename}
         }
     )
@@ -173,7 +174,7 @@ def share(share_from_user: str, share_to_user: str, filename: str) :
         "success" : True
     })
 
-def lambda_handler(event, context):    
+def lambda_handler(event, context):
     # main
     params = event['queryStringParameters'] # get parameter dict
     if params['command']: # execute commands by comparing "command"
