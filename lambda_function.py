@@ -40,12 +40,29 @@ def decodeFileName(filename: str, owner: str) :
 # checking file ownership
 # by taking encoded filename and a user to check ownership with as arguments
 # get metadata of "encoded_filename" and compare "owner" with the user argument
-def isOwnerOfFile(user: str, encoded_filename: str) -> bool :
-    try: 
-        owner = s3.head_object(Bucket=BUCKET_NAME, Key=encoded_filename)['Metadata']['owner']
-        return owner == user
-    except:
-        return False
+def isOwnerOfFile(user: str, filename: str) -> bool :
+    result = db.query(
+        TableName="Files",
+        Select="COUNT",
+        KeyConditionExpression="username = :a AND filename = :b",
+        ExpressionAttributeValues={
+            ":a" : {"S" : user},
+            ":b" : {"S" : filename}
+        }
+    )
+    return result['Count'] > 0
+
+def isSharedWith(user: str, encoded_filename: str) -> bool :
+    result = db.query(
+        TableName="Sharings",
+        Select="COUNT",
+        KeyConditionExpression="shared_to = :a AND filename = :b",
+        ExpressionAttributeValues={
+            ":a" : {"S" : user},
+            ":b" : {"S" : encoded_filename}
+        }
+    )
+    return result['Count'] > 0
 
 def isUsernameExists(username: str) -> bool :
     response = db.query(
@@ -146,7 +163,7 @@ def viewFiles(user: str) :
 # if no, return error message in "data"
 def downloadFile(filename: str, user: str) :
     encoded_filename = encodeFileName(filename, user)
-    if isOwnerOfFile(user, encoded_filename) :
+    if isOwnerOfFile(user, filename) or isSharedWith(user, encoded_filename) :
         data_byte = s3.get_object(Bucket=BUCKET_NAME, Key=encoded_filename)['Body'].read()
         return json.dumps({
             "success" : True,
@@ -198,7 +215,7 @@ def share(share_from_user: str, share_to_user: str, filename: str) :
             "data" : f"Username \"{share_to_user}\" does not exists"
         })
     # filename must be owned by share_from_user ?? or can one share files that one has been shared with
-    if not isOwnerOfFile(share_from_user, encodeFileName(filename, share_from_user)) :
+    if not isOwnerOfFile(share_from_user, filename) :
         return json.dumps({
             "success" : False,
             "data" : f"{filename} is not owned by you"
