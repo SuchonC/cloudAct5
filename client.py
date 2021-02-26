@@ -40,15 +40,11 @@ def decodeInput(input: list) -> dict:
                 "arg2" : USER
             }
         elif len(input) == 3:
-            if input[2] != USER:
-                print("Currently not available, please use \"get <filename> [Your Username]\"")
-                return {}
-            else :
-                return { # same as "get" with no username specified
-                    "arg0" : "get",
-                    "arg1" : input[1],
-                    "arg2" : USER
-                }
+            return {
+                "arg0" : "get",
+                "arg1" : input[1],
+                "arg2" : input[2]
+            }
         else :
             print("Usage : get <filename> [Username]")
             return {}
