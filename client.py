@@ -75,12 +75,18 @@ def decodeInput(input: list) -> dict:
             return {}
     else : print("List of commands : newuser, login, put, view and get")
 
+def isLoggedIn():
+    return USER != ''
+
 # handle put command
 # takes in {'arg0': 'put', 'arg1': <filename>}
 # then send post request to lambda with file (in byte) as a request body
 # and {'command': 'put', 'filename': <filename>, 'user': <user>} as a request parameter
 # expected {'success': True | False} as a response
 def handle_put(command_dict: dict) :
+    if not isLoggedIn():
+        print("Please login")
+        return
     filename = command_dict['arg1']
     try :
         with open(PATH.joinpath(filename), 'rb') as file:
@@ -101,6 +107,9 @@ def handle_put(command_dict: dict) :
 # expected {'success': True | False, 'data': <list of files in string>} as a response
 # an ex. of list of files in string is "file1.txt 15 2021/02/20 16:12:41\nfile2.txt 15 2021/02/21 16:00:00"
 def handle_view():
+    if not isLoggedIn():
+        print("Please login")
+        return
     try :
         response = requests.get(URL, params={
             "command": "view",
@@ -117,6 +126,9 @@ def handle_view():
 # and {'commnand': 'get', 'filename': <filename>, 'user': <user>} as a request parameter
 # expected {'success': True | False, 'data': <file | failed message>, 'isBase64Encoded': True | False} as a response
 def handle_get(command_dict: dict):
+    if not isLoggedIn():
+        print("Please login")
+        return
     filename = command_dict['arg1']
     user = command_dict['arg2']
     try:
