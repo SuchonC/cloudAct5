@@ -9,7 +9,7 @@ if not 'LAMBDA_URL' in os.environ :
 
 URL = os.environ['LAMBDA_URL']
 PATH = pathlib.Path().absolute().joinpath('files') # files to be used are located in 'files' subfolder
-USER = "suchon1"
+USER = ""
 
 # takes splitted input into a dict
 # ex. from ['put', 'myfile.txt'] into {'arg0: 'put', 'arg1': 'myfile.txt'}
@@ -52,7 +52,18 @@ def decodeInput(input: list) -> dict:
         else :
             print("Usage : get <filename> [Username]")
             return {}
-    else : print("List of commands : put, view and get")
+    elif input[0] == 'newuser' :
+        if len(input) == 4:
+            return {
+                "arg0" : "newuser",
+                "arg1" : input[1],
+                "arg2" : input[2],
+                "arg3" : input[3]
+            }
+        else :
+            print("Usage : newuser <username> <password> <confirm password>")
+            return {}
+    else : print("List of commands : newuser, put, view and get")
 
 # handle put command
 # takes in {'arg0': 'put', 'arg1': <filename>}
@@ -116,6 +127,19 @@ def handle_get(command_dict: dict):
     except FileNotFoundError:
         print(f"FAILED, {PATH} not found")
 
+def handle_newuser(command_dict: dict) :
+    # validate password (confirm)
+    if command_dict['arg2'] != command_dict['arg3'] :
+        print("Passwords do not match")
+    else :
+        response = requests.post(URL, params={
+            "command" : "newuser",
+            "username" : command_dict['arg1'],
+            "password" : command_dict['arg2']
+        }).json()
+        if response['success'] : print("OK")
+        else : print(f"FAILED\n{response['data']}")
+
 # main loop
 while True:
     user_input = input(">> ").split() # split the input
@@ -124,3 +148,4 @@ while True:
         if command['arg0'] == 'put' : handle_put(command) 
         elif command['arg0'] == 'view' : handle_view()
         elif command['arg0'] == 'get' : handle_get(command)
+        elif command['arg0'] == 'newuser' : handle_newuser(command)

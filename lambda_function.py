@@ -3,6 +3,7 @@ import boto3
 import base64
 
 s3 = boto3.client('s3')
+db = boto3.client('dynamodb')
 BUCKET_NAME = "cloudact5"
 
 # Helper function
@@ -45,6 +46,18 @@ def isOwnerOfFile(user: str, encoded_filename: str) -> bool :
         return owner == user
     except:
         return False
+
+def isUsernameExists(username: str) -> bool :
+    response = db.query(
+        TableName="Users",
+        Select="COUNT",
+        KeyConditionExpression='username = :a',
+        ExpressionAttributeValues={
+            ':a': {'S': username}
+        }
+    )
+    
+    return response['Count'] == 0
 
 # Handles uploading file
 # takes in "file" (in byte) and "params" as arguments
@@ -104,17 +117,44 @@ def downloadFile(filename: str, user: str) :
         "data" : f"{filename} does not belong to {user}",
         "isBase64Encoded" : False
     })
+    
+def createUser(username: str, password: str) :
+    if isUsernameExists(username):
+        db.put_item(
+            TableName="Users",
+            Item={
+                "username" : {"S" : username},
+                "password" : {"S" : password}
+            }
+        )
+        return json.dumps({
+            "success" : True
+        })
+    else : return json.dumps({
+        "success" : False,
+        "data" : f"Username \"{username}\" is already exists"
+    })
 
 def lambda_handler(event, context):
+    # test
+    # params = {
+    #     "command" : "login",
+    #     "username" : "suchon",
+    #     "password" : "foke"
+    # }
+    
     # main
     params = event['queryStringParameters'] # get parameter dict
     if params['command']: # execute commands by comparing "command"
         if params['command'] == 'put' : 
             returnStatus = uploadfile(getDecodedBody(event), params)
-            return getReturnDict(200, returnStatus)
+            return getReturnDict(201, returnStatus)
         elif params['command'] == 'view' :
             files = viewFiles(params['user'])
             return getReturnDict(200, files)
         elif params['command'] == 'get' :
             file = downloadFile(params['filename'], params['user'])
             return getReturnDict(200, file)
+        elif params['command'] == 'newuser' :
+            newuser = createUser(params['username'], params['password'])
+            return getReturnDict(201, newuser)
