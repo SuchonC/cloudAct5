@@ -213,7 +213,8 @@ def login(username: str, password: str) :
     response = db.query(
         TableName="Users",
         Select="COUNT",
-        KeyConditionExpression='username = :a AND password = :b',
+        KeyConditionExpression='username = :a',
+        FilterExpression="password = :b",
         ExpressionAttributeValues={
             ':a': {'S': username},
             ':b': {'S': password}
