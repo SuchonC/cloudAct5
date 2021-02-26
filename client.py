@@ -8,7 +8,7 @@ if not 'LAMBDA_URL' in os.environ :
     exit()
 
 URL = os.environ['LAMBDA_URL']
-PATH = pathlib.Path().absolute().joinpath('files') # files to be used are located in 'files' subfolder
+PATH = pathlib.Path().absolute() # files to be used are located in 'files' subfolder
 USER = ""
 
 # takes splitted input into a dict
