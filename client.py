@@ -88,7 +88,7 @@ def decodeInput(input: list) -> dict:
             print("Usage : logout")
     elif input[0] == 'quit' :
         exit()
-    else : print("List of commands : newuser, login, logout, share, put, view, get and exit")
+    else : print("List of commands : newuser, login, logout, share, put, view, get and quit")
 
 def isLoggedIn():
     return USER != ''
