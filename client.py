@@ -3,12 +3,8 @@ import base64
 import os
 import pathlib
 
-if not 'LAMBDA_URL' in os.environ :
-    print("Please set an environment variable named 'LAMBDA_URL' with the my URL. You can find it in my PDF")
-    exit()
-
-URL = os.environ['LAMBDA_URL']
-PATH = pathlib.Path().absolute().joinpath('files') # files to be used are located in 'files' subfolder
+URL = "https://uuirpivhhc.execute-api.ap-southeast-1.amazonaws.com/default/cloudact5"
+PATH = pathlib.Path().absolute() # files to be used are located in 'files' subfolder
 USER = ""
 
 # takes splitted input into a dict
