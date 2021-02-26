@@ -213,7 +213,7 @@ def handle_logout(command_dict: dict) :
 
 # main loop
 while True:
-    user_input = input(">> ").split() # split the input
+    user_input = input(">>").split() # split the input
     command = decodeInput(user_input) # decode splitted input into a dict
     if command : # if input is successfully decoded then execute command by comparing 'arg0'
         if command['arg0'] == 'put' : handle_put(command) 
