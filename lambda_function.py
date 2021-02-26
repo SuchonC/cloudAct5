@@ -134,15 +134,22 @@ def createUser(username: str, password: str) :
         "success" : False,
         "data" : f"Username \"{username}\" is already exists"
     })
-
-def lambda_handler(event, context):
-    # test
-    # params = {
-    #     "command" : "login",
-    #     "username" : "suchon",
-    #     "password" : "foke"
-    # }
     
+def login(username: str, password: str) :
+    response = db.query(
+        TableName="Users",
+        Select="COUNT",
+        KeyConditionExpression='username = :a AND password = :b',
+        ExpressionAttributeValues={
+            ':a': {'S': username},
+            ':b': {'S': password}
+        }
+    )
+    return json.dumps({
+        "success" : response['Count'] == 1
+    })
+
+def lambda_handler(event, context):    
     # main
     params = event['queryStringParameters'] # get parameter dict
     if params['command']: # execute commands by comparing "command"
@@ -158,3 +165,6 @@ def lambda_handler(event, context):
         elif params['command'] == 'newuser' :
             newuser = createUser(params['username'], params['password'])
             return getReturnDict(201, newuser)
+        elif params['command'] == 'login' :
+            loginStatus = login(params['username'], params['password'])
+            return getReturnDict(201, loginStatus)

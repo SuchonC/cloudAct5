@@ -63,7 +63,17 @@ def decodeInput(input: list) -> dict:
         else :
             print("Usage : newuser <username> <password> <confirm password>")
             return {}
-    else : print("List of commands : newuser, put, view and get")
+    elif input[0] == 'login' :
+        if len(input) == 3 :
+            return {
+                "arg0" : "login",
+                "arg1" : input[1],
+                "arg2" : input[2]
+            }
+        else :
+            print("Usage : login <username> <password>")
+            return {}
+    else : print("List of commands : newuser, login, put, view and get")
 
 # handle put command
 # takes in {'arg0': 'put', 'arg1': <filename>}
@@ -140,6 +150,18 @@ def handle_newuser(command_dict: dict) :
         if response['success'] : print("OK")
         else : print(f"FAILED\n{response['data']}")
 
+def handle_login(command_dict: dict) :
+    response = requests.post(URL, params={
+        "command" : "login",
+        "username" : command_dict['arg1'],
+        "password" : command_dict['arg2']
+    }).json()
+    if response['success'] :
+        print("OK")
+        global USER
+        USER = command_dict['arg1']
+    else : print("FAILED")
+
 # main loop
 while True:
     user_input = input(">> ").split() # split the input
@@ -149,3 +171,4 @@ while True:
         elif command['arg0'] == 'view' : handle_view()
         elif command['arg0'] == 'get' : handle_get(command)
         elif command['arg0'] == 'newuser' : handle_newuser(command)
+        elif command['arg0'] == 'login' : handle_login(command)
