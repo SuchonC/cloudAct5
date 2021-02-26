@@ -79,7 +79,14 @@ def decodeInput(input: list) -> dict:
         else :
             print("Usage : share <filename> <destination username>")
             return
-    else : print("List of commands : newuser, login, share, put, view and get")
+    elif input[0] == 'logout' :
+        if len(input) == 1 :
+            return {
+                "arg0" : "logout"
+            }
+        else :
+            print("Usage : logout")
+    else : print("List of commands : newuser, login, logout, share, put, view and get")
 
 def isLoggedIn():
     return USER != ''
@@ -194,6 +201,14 @@ def handle_share(command_dict: dict) :
     else :
         print(f"FAILED\n{response['data']}")
 
+def handle_logout(command_dict: dict) :
+    if not isLoggedIn() :
+        print("Please login")
+        return
+    global USER
+    USER = ''
+    print("OK")
+
 # main loop
 while True:
     user_input = input(">> ").split() # split the input
@@ -205,3 +220,4 @@ while True:
         elif command['arg0'] == 'newuser' : handle_newuser(command)
         elif command['arg0'] == 'login' : handle_login(command)
         elif command['arg0'] == 'share' : handle_share(command)
+        elif command['arg0'] == 'logout' : handle_logout(command)
