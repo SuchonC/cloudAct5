@@ -87,7 +87,13 @@ def decodeInput(input: list) -> dict:
         else :
             print("Usage : logout")
     elif input[0] == 'quit' :
-        exit()
+        if len(input) == 1 :
+            return {
+                "arg0" : "quit"
+            }
+        else :
+            print("Usage : quit")
+            return {}
     else : print("List of commands : newuser, login, logout, share, put, view, get and quit")
 
 def isLoggedIn():
@@ -221,13 +227,16 @@ def handle_share(command_dict: dict) :
 # handle logout command
 # basically just set USER to ''
 # empty USER variable, that is
-def handle_logout(command_dict: dict) :
+def handle_logout() :
     if not isLoggedIn() :
         print("Please login")
         return
     global USER
     USER = ''
     print("OK")
+
+def handle_quit() :
+    exit()
 
 # main loop
 while True:
@@ -240,4 +249,5 @@ while True:
         elif command['arg0'] == 'newuser' : handle_newuser(command)
         elif command['arg0'] == 'login' : handle_login(command)
         elif command['arg0'] == 'share' : handle_share(command)
-        elif command['arg0'] == 'logout' : handle_logout(command)
+        elif command['arg0'] == 'logout' : handle_logout()
+        elif command['arg0'] == 'quit' : handle_quit()
