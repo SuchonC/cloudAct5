@@ -56,8 +56,40 @@ def isUsernameExists(username: str) -> bool :
             ':a': {'S': username}
         }
     )
-    
     return response['Count'] > 0
+    
+def getFilenamesOwnedBy(username: str) :
+    owned_by = db.query(
+        TableName="Files",
+        KeyConditionExpression="username = :a",
+        ProjectionExpression="filename",
+        ExpressionAttributeValues={
+            ":a" : {"S" : username}
+        }
+    )
+    filenames = []
+    for file in owned_by['Items'] :
+        filenames.append(file['filename']['S'])
+    return filenames
+
+# returns [{filename, owner}]
+def getFilenamesSharedWith(username: str) :
+    shared_with = db.query(
+        TableName="Sharings",
+        KeyConditionExpression="shared_to = :a",
+        ExpressionAttributeValues={
+            ":a" : {"S" : username}
+        }
+    )
+    filenames = []
+    for file in shared_with['Items'] :
+        filename = file['filename']['S']
+        owner = file['shared_from']['S']
+        filenames.append({
+            "filename" : decodeFileName(filename, owner),
+            "owner" : owner
+        })
+    return filenames
 
 # Handles uploading file
 # takes in "file" (in byte) and "params" as arguments
@@ -67,9 +99,14 @@ def isUsernameExists(username: str) -> bool :
 def uploadfile(file, params: dict) :
     encoded_filename = encodeFileName(params['filename'], params['user'])
     try :
-        s3.put_object(Body=file, Key=encoded_filename, Bucket=BUCKET_NAME, Metadata={
-            "owner": params['user']
-        })
+        db.put_item(
+            TableName="Files",
+            Item={
+                "username" : {"S" : params['user']},
+                "filename" : {"S" : params['filename']}
+            }
+        )
+        s3.put_object(Body=file, Key=encoded_filename, Bucket=BUCKET_NAME)
         return json.dumps({
             "success" : True
         })
@@ -82,20 +119,24 @@ def uploadfile(file, params: dict) :
 # outputs files owned by "user" in string
 # output ex. "file1.txt 15 2021/02/20 16:21:12\ntest2.txt 15 2021/02/20 16:00:23"
 def viewFiles(user: str) :
-    files_str = ''
-    dict_result =  s3.list_objects(Bucket=BUCKET_NAME)
-    if 'Contents' in dict_result:
-        objects = dict_result['Contents']
-        for i in range (len(objects)):
-            encoded_filename = objects[i]['Key']
-            if isOwnerOfFile(user, encoded_filename) :
-                decoded_filename = decodeFileName(encoded_filename, user)
-                file_size = str(objects[i]['Size'])
-                last_modified = objects[i]['LastModified'].strftime("%Y/%m/%d %H:%M:%S")
-                files_str += f"{decoded_filename} {file_size} {last_modified}\n"
+    files_owned_by = getFilenamesOwnedBy(user)
+    files_shared_with = getFilenamesSharedWith(user)
+    output = ''
+    for file in files_owned_by:
+        encoded_filename = encodeFileName(file, user)
+        object = s3.head_object(Bucket=BUCKET_NAME, Key=encoded_filename)
+        file_size = str(object['ContentLength'])
+        last_modified = object['LastModified'].strftime("%Y/%m/%d %H:%M:%S")
+        output += f"{file} {file_size} {last_modified} {user}\n"
+    for record in files_shared_with:
+        encoded_filename = encodeFileName(record['filename'], record['owner'])
+        object = s3.head_object(Bucket=BUCKET_NAME, Key=encoded_filename)
+        file_size = str(object['ContentLength'])
+        last_modified = object['LastModified'].strftime("%Y/%m/%d %H:%M:%S")
+        output += f"{record['filename']} {file_size} {last_modified} {record['owner']}\n"
     return json.dumps({
         "success" : True,
-        "data" : files_str[:-1]
+        "data" : output[:-1]
     })
 
 # Handles downloading file
@@ -167,7 +208,7 @@ def share(share_from_user: str, share_to_user: str, filename: str) :
         Item={
             "shared_to" : {"S" : share_to_user},
             "shared_from" : {"S" : share_from_user},
-            "filename" : {"S" : filename}
+            "filename" : {"S" : encodeFileName(filename, share_from_user)}
         }
     )
     return json.dumps({
